@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>gcelaor</title>
+    <description>山豆先生</description>
+    <link>http://localhost:4000/</link>
+    <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
+    <pubDate>Thu, 27 Oct 2016 02:51:26 +0800</pubDate>
+    <lastBuildDate>Thu, 27 Oct 2016 02:51:26 +0800</lastBuildDate>
+    <generator>Jekyll v3.3.0</generator>
+    
+      <item>
+        <title>编写浏览器和Node.js通用的Javascript模块</title>
+        <description>&lt;p&gt;长期以来JavaScript语言本身不提供模块化的支持， ES6中终于给出了&lt;code class=&quot;highlighter-rouge&quot;&gt;from&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;import&lt;/code&gt;等关键字来进行模块化的代码组织。 但CommonJS、AMD等规范已经被广为使用，如果希望你的JavaScript同时支持浏览器和Node.js， 现在只有这几种方式：&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;通过&lt;a href=&quot;http://browserify.org/&quot;&gt;browserify&lt;/a&gt;等工具进行转换。&lt;/li&gt;
+  &lt;li&gt;提供浏览器端CommonJS框架，比如这个&lt;a href=&quot;http://harttle.com/2016/04/25/commonjs.html&quot;&gt;简易的 CommonJS 实现&lt;/a&gt;。&lt;/li&gt;
+  &lt;li&gt;通过小心的编码来支持多种环境。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://browserify.org/&quot;&gt;browserify&lt;/a&gt;几乎可以保证Node.js下测试通过的代码在浏览器中仍然能够正常使用。 但缺点也很显然：很容易产生冗余代码并生成一个巨大的JavaScript库。 对于微型的JavaScript工具，小心地编码再合适不过了！见下文。&lt;/p&gt;
+
+&lt;h1 id=&quot;section&quot;&gt;避开全局的名称空间&lt;/h1&gt;
+
+&lt;p&gt;CommonJS中，每个源文件中的局部变量在其他文件中不可见。 然而浏览器中，所有全局名称空间的变量对所有JavaScript文件都可见。 这意味着我们需要包装所有的代码。例如：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;(function(){
+    // your code goes here...
+})();
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;不同于常见编程语言，JavaScript采取&lt;a href=&quot;http://harttle.com/2016/02/05/js-scope.html&quot;&gt;函数作用域&lt;/a&gt;， 用一个&lt;code class=&quot;highlighter-rouge&quot;&gt;function&lt;/code&gt;来包裹你的代码可以隐藏里面的局部变量。&lt;/p&gt;
+
+&lt;p&gt;如果你对整个文件都被缩进的代码很反感，可以在构建时再添加上述代码。例如Makefile中：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;person.js: index.js
+    echo '(function(){' &amp;gt; $@
+    cat $^ &amp;gt;&amp;gt; $@
+    echo '})();' &amp;gt;&amp;gt; $@
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h1 id=&quot;section-1&quot;&gt;一个简单的类&lt;/h1&gt;
+
+&lt;p&gt;当然，『类』指的就是一个函数。假设我们的JavaScript模块提供一个叫做&lt;code class=&quot;highlighter-rouge&quot;&gt;Person&lt;/code&gt;的类：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;(function(){
+    function Person(){
+        this.name = 'harttle';
+    }
+})();
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;下文将会考虑如何将这个类提供给其他模块使用。&lt;/p&gt;
+
+&lt;h1 id=&quot;commonjs&quot;&gt;检测CommonJS环境&lt;/h1&gt;
+
+&lt;p&gt;要使用&lt;code class=&quot;highlighter-rouge&quot;&gt;typeof&lt;/code&gt;来检测一个变量是否曾被声明，因为&lt;code class=&quot;highlighter-rouge&quot;&gt;if&lt;/code&gt;对于未声明的变量会抛出错误。 例如：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;// Uncaught ReferenceError: foo is not defined
+if(foo == undefined){       
+    console.log('foo does not exist');
+}
+// 正常运行
+if(typeof foo == 'undefined'){
+    console.log('foo does not exist');
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;检测CommonJS我们只需要检测&lt;code class=&quot;highlighter-rouge&quot;&gt;module&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;exports&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;require&lt;/code&gt;是否存在，比如：&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;// CommonJS
+if (typeof module !== 'undefined' &amp;amp;&amp;amp; typeof module.exports !== 'undefined') {
+    module.exports = Person;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h1 id=&quot;section-2&quot;&gt;检测浏览器环境&lt;/h1&gt;
+
+&lt;p&gt;浏览器环境也包括引入了AMD框架的，以及没有做模块化的。 对于前者我们应当使用AMD框架来声明一个模块，而对于后者我们只需要暴露一个全局变量。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;// Browser
+if (typeof define === 'function' &amp;amp;&amp;amp; define.amd) {
+    define('Person', [], function() {
+        return Person;
+    });
+} else {
+    window.Person = Person;
+}
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;当然这些浏览器检测相关逻辑也应当一并包裹在&lt;code class=&quot;highlighter-rouge&quot;&gt;function&lt;/code&gt;中。&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        <pubDate>Wed, 19 Oct 2016 04:21:35 +0800</pubDate>
+        <link>http://localhost:4000/2016/10/19/Write-browser-and-Node.js-generic-Javascript-modules.md/</link>
+        <guid isPermaLink="true">http://localhost:4000/2016/10/19/Write-browser-and-Node.js-generic-Javascript-modules.md/</guid>
+        
+        <category>AMD</category>
+        
+        <category>CommonJS</category>
+        
+        <category>Browser</category>
+        
+        <category>Node.js</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Git:时光机</title>
+        <description>&lt;h2 id=&quot;section&quot;&gt;提交记录&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：希望查看仓库的中所有提交的信息，比如提交人、提交时间、代码增删、Commit ID等。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：通过&lt;code class=&quot;highlighter-rouge&quot;&gt;git status&lt;/code&gt;和&lt;code class=&quot;highlighter-rouge&quot;&gt;git log&lt;/code&gt;可查询这些信息。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 查看Git提交的元信息
+git log
+# 查看Git提交，以及对应的代码增删
+git log -p
+# 查看app.js的Git提交日志
+git log -p app.js
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;git-blame&quot;&gt;Git Blame&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：查看每一行代码的最后改动时间，以及提交人。例如，追溯&lt;code class=&quot;highlighter-rouge&quot;&gt;app.js&lt;/code&gt;文件中某一行是被谁改坏的。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：通过&lt;code class=&quot;highlighter-rouge&quot;&gt;git blame&lt;/code&gt;来查询。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git blame app.js
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;更多参数请查询&lt;code class=&quot;highlighter-rouge&quot;&gt;git blame --help&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;检出历史版本&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：希望将当前项目回到某个历史版本。例如：希望从某个历史版本建立分支时。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：&lt;code class=&quot;highlighter-rouge&quot;&gt;git checkout&lt;/code&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 检出到某个commit，可通过git log得到Commit ID
+git checkout 5304f1bd...b4d4
+# 检出到某个分支或Tag
+git checkout gh-pages
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;原则上讲Git历史是不允许更改的，这方面Git很像 &lt;a href=&quot;http://harttle.com/2014/01/03/morden-os-fs.html&quot;&gt;日志结构的文件系统&lt;/a&gt;（Log-Structured File Systems）。 但也有办法可以更改日志，例如：&lt;a href=&quot;http://harttle.com/2016/03/22/purge-large-files-in-gitrepo.html&quot;&gt;寻找并删除Git记录中的大文件&lt;/a&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        <pubDate>Thu, 13 Oct 2016 19:20:15 +0800</pubDate>
+        <link>http://localhost:4000/2016/10/13/Git-Time-Machine/</link>
+        <guid isPermaLink="true">http://localhost:4000/2016/10/13/Git-Time-Machine/</guid>
+        
+        <category>Git</category>
+        
+        <category>Github</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Git学习—远程仓库</title>
+        <description>&lt;h2 id=&quot;section&quot;&gt;显示远程仓库&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：需要查看远程仓库地址（比如想把它拷贝给别人）。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;git remote&lt;/code&gt;相关命令。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 查看所有远程仓库
+git remote -v
+# 查看一个远程仓库（比如origin）的详细信息（包括Fetch、Push地址）
+git remote show origin
+# -n 参数禁止联系远程仓库，可大大加快速度
+git remote show origin -n
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;管理远程仓库&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：需要添加、更改或删除远程仓库时。例如远程仓库从Github迁移到Coding.net时需要更改远程仓库URL（不需重新clone）。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;git remote&lt;/code&gt;系列命令操作。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 添加远程仓库bar.git并命名为bar
+git remote add bar bar.git
+# 更改远程仓库URL
+git remote set-url origin new.xxx.git
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;更多命令请查询&lt;code class=&quot;highlighter-rouge&quot;&gt;git remote --help&lt;/code&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;section-2&quot;&gt;同步远程仓库&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：将远程仓库同步到本地，或将本地仓库同步到远程。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;git fetch&lt;/code&gt;和&lt;code class=&quot;highlighter-rouge&quot;&gt;git push&lt;/code&gt;系列命令。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;文档&lt;/strong&gt;：&lt;a href=&quot;https://git-scm.com/docs/git-push&quot;&gt;https://git-scm.com/docs/git-push&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 同步默认的remote仓库（通常叫origin）到本地
+# 工作区文件并不会发生改变，只同步仓库内容，即`.git/`目录
+git fetch
+# 同步所有remote仓库到本地
+git fetch --all
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-3&quot;&gt;多个远程仓库&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：一个本地仓库需要与多个远程仓库同步，或需要merge其他远程仓库时。 例如Github Pages博客同时Push到Github和Coding.net。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：逐个添加远程仓库到&lt;code class=&quot;highlighter-rouge&quot;&gt;remote&lt;/code&gt;，逐一Push。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 将coding仓库添加到remote
+git remote add coding git@coding.net:bar.git
+# 将master分支Push到origin的master分支
+git push origin master
+# 将master分支Push到coding的coding-pages分支
+git push coding master:coding-pages
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;checkout&quot;&gt;checkout一个远程分支&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：现有一个本地仓库不存在的远程分支，希望让当前工作区进入这个分支。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：可以先同步本地仓库，再切换到该分支。也可以先切换到该分支再同步远程代码。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 方法一：同步本地仓库
+git fetch
+# 切换到远程分支
+git checkout feature-x
+
+# 方法二：切换到新的分支
+git checkout -b feature-x
+git branch --set-upstream-to=remote/feature-x
+# 等效于
+git branch -u remote/feature-x
+git pull
+
+# 方法三：先创建分支以及track关系，再切换分支
+git branch feature-x
+git branch -u remote/feature-x feature-x
+git checkout feature-x
+git pull
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-4&quot;&gt;删除远程分支&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：不小心把一个分支名Push上去了，需要在远程删除一个分支。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：直接push，添加–delete参数即可。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;文档&lt;/strong&gt;：&lt;a href=&quot;https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E8%BF%9C%E7%A8%8B%E5%88%86%E6%94%AF&quot;&gt;https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E8%BF%9C%E7%A8%8B%E5%88%86%E6%94%AF&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 删除远程origin上的serverfix分支
+git push origin --delete serverfix
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;tag&quot;&gt;删除远程Tag&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：Tag命名错误，或者需要统一命名风格。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：在本地删除Tag，然后Push到服务器。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git tag -d some-tag
+git push origin :refs/tags/some-tags
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+</description>
+        <pubDate>Wed, 12 Oct 2016 18:49:15 +0800</pubDate>
+        <link>http://localhost:4000/2016/10/12/Learn-Git-Remote/</link>
+        <guid isPermaLink="true">http://localhost:4000/2016/10/12/Learn-Git-Remote/</guid>
+        
+        <category>Git</category>
+        
+        <category>Github</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Git学习:提交代码</title>
+        <description>&lt;p&gt; 本文以实际的案例，总结了Git代码提交相关的操作步骤以及涉及到的Git命令。主要包括：&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git add&lt;/code&gt;命令将工作区内容添加到暂存区， &lt;code class=&quot;highlighter-rouge&quot;&gt;git commit&lt;/code&gt;命令将暂存区内容提交到本地仓库。 添加&lt;code class=&quot;highlighter-rouge&quot;&gt;-m&lt;/code&gt;参数可直接用指定的message提交本次commit。 否则Vim会打开默认的文本编辑器提示你输入commit message。&lt;/p&gt;
+
+&lt;h2 id=&quot;section&quot;&gt;将改动添加到暂存区&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：在提交前需要选择提交的文件（到暂存区），否则git会提示没有要提交的东西。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;git add&lt;/code&gt;命令即可将某个文件（的修改）添加到暂存区。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;文档&lt;/strong&gt;：&lt;a href=&quot;https://git-scm.com/docs/git-add&quot;&gt;https://git-scm.com/docs/git-add&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 添加README.md到暂存区
+git add README.md
+# 添加当前目录所有文件到暂存区
+git add .
+# 强制添加，忽略.gitignore配置
+git add node_modules/ --force
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git add&lt;/code&gt;会忽略列在&lt;code class=&quot;highlighter-rouge&quot;&gt;.gitignore&lt;/code&gt;中的文件/目录。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;提交对仓库中文件的改动&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：希望只提交仓库中既有文件的改动，而不想&lt;code class=&quot;highlighter-rouge&quot;&gt;add&lt;/code&gt;其他的文件（仓库外）。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：省略&lt;code class=&quot;highlighter-rouge&quot;&gt;git add&lt;/code&gt;命令，然后以&lt;code class=&quot;highlighter-rouge&quot;&gt;-a&lt;/code&gt;参数运行&lt;code class=&quot;highlighter-rouge&quot;&gt;commit&lt;/code&gt;。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git commit -a
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;可通过&lt;code class=&quot;highlighter-rouge&quot;&gt;git status&lt;/code&gt;来查看当前的改动情况，以及本地与远程的同步情况。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;add&quot;&gt;撤销Add&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：不小心添加了文件到暂存区，现在需要撤销所有的&lt;code class=&quot;highlighter-rouge&quot;&gt;git add&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;get reset&lt;/code&gt;，重置暂存区到HEAD。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 取消Add某一个文件
+git reset path/to/file
+# 取消所有Add的文件（将会使得所有改动变成not staged或untracked）
+git reset
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;commit&quot;&gt;撤销上次Commit&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：发现上次&lt;code class=&quot;highlighter-rouge&quot;&gt;commit&lt;/code&gt;信息有误，或不小心&lt;code class=&quot;highlighter-rouge&quot;&gt;commit&lt;/code&gt;了不合适的文件， 希望能撤销&lt;code class=&quot;highlighter-rouge&quot;&gt;commit&lt;/code&gt;而文件不受改动。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用Git的『软』（不改动文件）重置。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git reset --soft HEAD^
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;HEAD^&lt;/code&gt;回到表示重置到当前状态的前一个&lt;code class=&quot;highlighter-rouge&quot;&gt;commit&lt;/code&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;commit-1&quot;&gt;修改上次Commit&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：漏掉了某个文件，或者写错了Commit信息，希望能够补充一下而不是撤销再重新Commit。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;--amend&lt;/code&gt;参数即可修改上次Commit。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;文档&lt;/strong&gt;：&lt;a href=&quot;https://git-scm.com/book/zh/v1/Git-%E5%9F%BA%E7%A1%80-%E6%92%A4%E6%B6%88%E6%93%8D%E4%BD%9C&quot;&gt;https://git-scm.com/book/zh/v1/Git-%E5%9F%BA%E7%A1%80-%E6%92%A4%E6%B6%88%E6%93%8D%E4%BD%9C&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 下面三条命令只产生一个Commit
+git commit -m 'initial commit'
+git add forgotten_file  # 添加漏掉的文件
+git commit --amend      # 补充Commit信息
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-2&quot;&gt;撤销工作区所有改动&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：希望撤销所有工作区的改动，回到最后一次commit的状态。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：&lt;code class=&quot;highlighter-rouge&quot;&gt;git checkout&lt;/code&gt;和&lt;code class=&quot;highlighter-rouge&quot;&gt;git reset&lt;/code&gt;都可达到目的。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;文档&lt;/strong&gt;：&lt;a href=&quot;https://git-scm.com/docs/git-reset&quot;&gt;https://git-scm.com/docs/git-reset&lt;/a&gt;, &lt;a href=&quot;https://git-scm.com/docs/git-checkout&quot;&gt;https://git-scm.com/docs/git-checkout&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 重置工作区的所有改动
+git reset --hard
+# 该命令可以指定当前目录，还是某个文件
+git checkout .
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-3&quot;&gt;空提交&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：只想产生一个commit而不想改动文件。比如需要push一个commit以触发重新部署的Git Hook时。 &lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;--allow-empty&lt;/code&gt;参数来提交。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git commit --allow-empty -m 'empty commit'
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-4&quot;&gt;将文件从仓库中移除&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：不小心把不应提交到仓库的文件（比如临时文件，大文件，配置文件等）提交了进去，现在希望将其删除。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;git rm&lt;/code&gt; 命令。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 从仓库和工作区都删除它（例如临时文件）
+git rm .*.swp
+# 只从仓库中删除，工作区中保留（例如配置文件）
+git rm --cached config.yml
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;如果希望从仓库历史中也删除（例如大文件），那么需要使用&lt;code class=&quot;highlighter-rouge&quot;&gt;git filter-branch&lt;/code&gt;系列命令。 请参考&lt;a href=&quot;http://harttle.com/2016/03/22/purge-large-files-in-gitrepo.html&quot;&gt;寻找并删除Git记录中的大文件&lt;/a&gt;一文。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git rm&lt;/code&gt;和bash &lt;code class=&quot;highlighter-rouge&quot;&gt;rm&lt;/code&gt;的参数类似，基本可通用。&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        <pubDate>Wed, 12 Oct 2016 17:30:15 +0800</pubDate>
+        <link>http://localhost:4000/2016/10/12/Learn-Git-Submit-Code/</link>
+        <guid isPermaLink="true">http://localhost:4000/2016/10/12/Learn-Git-Submit-Code/</guid>
+        
+        <category>Git</category>
+        
+        <category>Github</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Git:提交代码</title>
+        <description>&lt;p&gt; 本文以实际的案例，总结了Git代码提交相关的操作步骤以及涉及到的Git命令。主要包括：&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git add&lt;/code&gt;命令将工作区内容添加到暂存区， &lt;code class=&quot;highlighter-rouge&quot;&gt;git commit&lt;/code&gt;命令将暂存区内容提交到本地仓库。 添加&lt;code class=&quot;highlighter-rouge&quot;&gt;-m&lt;/code&gt;参数可直接用指定的message提交本次commit。 否则Vim会打开默认的文本编辑器提示你输入commit message。&lt;/p&gt;
+
+&lt;h2 id=&quot;section&quot;&gt;将改动添加到暂存区&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：在提交前需要选择提交的文件（到暂存区），否则git会提示没有要提交的东西。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;git add&lt;/code&gt;命令即可将某个文件（的修改）添加到暂存区。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;文档&lt;/strong&gt;：&lt;a href=&quot;https://git-scm.com/docs/git-add&quot;&gt;https://git-scm.com/docs/git-add&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 添加README.md到暂存区
+git add README.md
+# 添加当前目录所有文件到暂存区
+git add .
+# 强制添加，忽略.gitignore配置
+git add node_modules/ --force
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git add&lt;/code&gt;会忽略列在&lt;code class=&quot;highlighter-rouge&quot;&gt;.gitignore&lt;/code&gt;中的文件/目录。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;提交对仓库中文件的改动&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：希望只提交仓库中既有文件的改动，而不想&lt;code class=&quot;highlighter-rouge&quot;&gt;add&lt;/code&gt;其他的文件（仓库外）。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：省略&lt;code class=&quot;highlighter-rouge&quot;&gt;git add&lt;/code&gt;命令，然后以&lt;code class=&quot;highlighter-rouge&quot;&gt;-a&lt;/code&gt;参数运行&lt;code class=&quot;highlighter-rouge&quot;&gt;commit&lt;/code&gt;。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git commit -a
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;可通过&lt;code class=&quot;highlighter-rouge&quot;&gt;git status&lt;/code&gt;来查看当前的改动情况，以及本地与远程的同步情况。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;add&quot;&gt;撤销Add&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：不小心添加了文件到暂存区，现在需要撤销所有的&lt;code class=&quot;highlighter-rouge&quot;&gt;git add&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;get reset&lt;/code&gt;，重置暂存区到HEAD。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 取消Add某一个文件
+git reset path/to/file
+# 取消所有Add的文件（将会使得所有改动变成not staged或untracked）
+git reset
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;commit&quot;&gt;撤销上次Commit&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：发现上次&lt;code class=&quot;highlighter-rouge&quot;&gt;commit&lt;/code&gt;信息有误，或不小心&lt;code class=&quot;highlighter-rouge&quot;&gt;commit&lt;/code&gt;了不合适的文件， 希望能撤销&lt;code class=&quot;highlighter-rouge&quot;&gt;commit&lt;/code&gt;而文件不受改动。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用Git的『软』（不改动文件）重置。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git reset --soft HEAD^
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;HEAD^&lt;/code&gt;回到表示重置到当前状态的前一个&lt;code class=&quot;highlighter-rouge&quot;&gt;commit&lt;/code&gt;。&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;commit-1&quot;&gt;修改上次Commit&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：漏掉了某个文件，或者写错了Commit信息，希望能够补充一下而不是撤销再重新Commit。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;--amend&lt;/code&gt;参数即可修改上次Commit。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;文档&lt;/strong&gt;：&lt;a href=&quot;https://git-scm.com/book/zh/v1/Git-%E5%9F%BA%E7%A1%80-%E6%92%A4%E6%B6%88%E6%93%8D%E4%BD%9C&quot;&gt;https://git-scm.com/book/zh/v1/Git-%E5%9F%BA%E7%A1%80-%E6%92%A4%E6%B6%88%E6%93%8D%E4%BD%9C&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 下面三条命令只产生一个Commit
+git commit -m 'initial commit'
+git add forgotten_file  # 添加漏掉的文件
+git commit --amend      # 补充Commit信息
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-2&quot;&gt;撤销工作区所有改动&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：希望撤销所有工作区的改动，回到最后一次commit的状态。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：&lt;code class=&quot;highlighter-rouge&quot;&gt;git checkout&lt;/code&gt;和&lt;code class=&quot;highlighter-rouge&quot;&gt;git reset&lt;/code&gt;都可达到目的。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;文档&lt;/strong&gt;：&lt;a href=&quot;https://git-scm.com/docs/git-reset&quot;&gt;https://git-scm.com/docs/git-reset&lt;/a&gt;, &lt;a href=&quot;https://git-scm.com/docs/git-checkout&quot;&gt;https://git-scm.com/docs/git-checkout&lt;/a&gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 重置工作区的所有改动
+git reset --hard
+# 该命令可以指定当前目录，还是某个文件
+git checkout .
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-3&quot;&gt;空提交&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：只想产生一个commit而不想改动文件。比如需要push一个commit以触发重新部署的Git Hook时。 &lt;strong&gt;步骤&lt;/strong&gt;：使用&lt;code class=&quot;highlighter-rouge&quot;&gt;--allow-empty&lt;/code&gt;参数来提交。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git commit --allow-empty -m 'empty commit'
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-4&quot;&gt;将文件从仓库中移除&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：不小心把不应提交到仓库的文件（比如临时文件，大文件，配置文件等）提交了进去，现在希望将其删除。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：使用 &lt;code class=&quot;highlighter-rouge&quot;&gt;git rm&lt;/code&gt; 命令。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# 从仓库和工作区都删除它（例如临时文件）
+git rm .*.swp
+# 只从仓库中删除，工作区中保留（例如配置文件）
+git rm --cached config.yml
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;如果希望从仓库历史中也删除（例如大文件），那么需要使用&lt;code class=&quot;highlighter-rouge&quot;&gt;git filter-branch&lt;/code&gt;系列命令。 请参考&lt;a href=&quot;http://harttle.com/2016/03/22/purge-large-files-in-gitrepo.html&quot;&gt;寻找并删除Git记录中的大文件&lt;/a&gt;一文。&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;git rm&lt;/code&gt;和bash &lt;code class=&quot;highlighter-rouge&quot;&gt;rm&lt;/code&gt;的参数类似，基本可通用。&lt;/p&gt;
+&lt;/blockquote&gt;
+</description>
+        <pubDate>Wed, 12 Oct 2016 17:30:15 +0800</pubDate>
+        <link>http://localhost:4000/2016/10/12/Git-Submit-Code/</link>
+        <guid isPermaLink="true">http://localhost:4000/2016/10/12/Git-Submit-Code/</guid>
+        
+        <category>Git</category>
+        
+        
+      </item>
+    
+      <item>
+        <title>Git学习:初始化</title>
+        <description>&lt;p&gt;​     本例子：”gcelaor”为我的GitHub用户名，”gcelaor.github.io”是我GitHub上的仓库。&lt;/p&gt;
+
+&lt;h2 id=&quot;section&quot;&gt;从既有远程仓库建立&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：加入一个项目，或创建一个项目副本。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：远程仓库已经存在的情况下，直接克隆即可得到一个仓库副本。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$ git clone git@github.com:gcelao/gcelaor.github.io
+$ cd gcelaor.github.io
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;h2 id=&quot;section-1&quot;&gt;从空的远程仓库建立&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;场景&lt;/strong&gt;：初始化一个远程仓库，例如建立一个Github仓库后。&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;步骤&lt;/strong&gt;：新建目录并将其初始化为Git仓库，然后添加远程仓库到&lt;code class=&quot;highlighter-rouge&quot;&gt;remote&lt;/code&gt;。&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;mkdir bar &amp;amp;&amp;amp; cd bar
+git init --bare
+git remote add origin git@foo.com:bar.git
+touch README.md
+git add README.md &amp;amp;&amp;amp; git commit -m 'init'
+# 初次Push需指定远程分支
+git push -u origin master
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+</description>
+        <pubDate>Tue, 11 Oct 2016 15:40:35 +0800</pubDate>
+        <link>http://localhost:4000/2016/10/11/Learn-Git-Initialization/</link>
+        <guid isPermaLink="true">http://localhost:4000/2016/10/11/Learn-Git-Initialization/</guid>
+        
+        <category>Git</category>
+        
+        <category>Github</category>
+        
+        
+      </item>
+    
+  </channel>
+</rss>

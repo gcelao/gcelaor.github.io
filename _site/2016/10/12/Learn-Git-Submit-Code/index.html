@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="google-site-verification" content="xBT4GhYoi5qRD5tr338pgPM5OWHHIDR6mNg1a3euekI" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="山豆先生">
+    <meta name="keyword"  content=" Happy coding">
+	<meta name="theme-color" content="#000000">
+    <link rel="shortcut icon" href="/img/favicon.ico">
+
+    <title>Git学习:提交代码 - Gcelaor Blog</title>
+
+    <link rel="canonical" href="http://localhost:4000/2016/10/12/Learn-Git-Submit-Code/">
+
+    <!-- Bootstrap Core CSS -->
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/hux-blog.min.css">
+
+    <!-- Pygments Github CSS -->
+    <link rel="stylesheet" href="/css/syntax.css">
+
+    <!-- Custom Fonts -->
+    <!-- <link href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Hux change font-awesome CDN to qiniu -->
+    <!-- <link href="http://cdn.staticfile.org/font-awesome/4.5.0/css/font-awesome.min.css" rel="stylesheet" type="text/css"> -->
+    <!-- Voleking change font-awesome CDN to bootcss -->
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- Hux Delete, sad but pending in China
+    <link href='http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/
+    css'>
+    -->
+    
+    <!-- 一言 http://hitokoto.us/ -->
+    <script type="text/javascript" src="http://api.hitokoto.us/rand?encode=js&charset=utf-8"></script>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <!-- ga & ba script hoook -->
+    <script></script>
+</head>
+
+
+<!-- hack iOS CSS :active style -->
+<body ontouchstart="">
+
+    <!-- Navigation -->
+<nav class="navbar navbar-default navbar-custom navbar-fixed-top">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header page-scroll">
+            <button type="button" class="navbar-toggle">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">gcelaor</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div id="huxblog_navbar">
+            <div class="navbar-collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/">Home</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/about/">About</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/archive/">Archive</a>
+                    </li>
+                    
+                    <li>
+                        <a href="/tags/">Tags</a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container -->
+</nav>
+<script>
+    // Drop Bootstarp low-performance Navbar
+    // Use customize navbar with high-quality material design animation
+    // in high-perf jank-free CSS3 implementation
+    var $body   = document.body;
+    var $toggle = document.querySelector('.navbar-toggle');
+    var $navbar = document.querySelector('#huxblog_navbar');
+    var $collapse = document.querySelector('.navbar-collapse');
+
+    var __HuxNav__ = {
+        close: function(){
+            $navbar.className = " ";
+            // wait until animation end.
+            setTimeout(function(){
+                // prevent frequently toggle
+                if($navbar.className.indexOf('in') < 0) {
+                    $collapse.style.height = "0px"
+                }
+            },400)
+        },
+        open: function(){
+            $collapse.style.height = "auto"
+            $navbar.className += " in";
+        }
+    }
+
+    // Bind Event
+    $toggle.addEventListener('click', function(e){
+        if ($navbar.className.indexOf('in') > 0) {
+            __HuxNav__.close()
+        }else{
+            __HuxNav__.open()
+        }
+    })
+
+    /**
+     * Since Fastclick is used to delegate 'touchstart' globally
+     * to hack 300ms delay in iOS by performing a fake 'click',
+     * Using 'e.stopPropagation' to stop 'touchstart' event from 
+     * $toggle/$collapse will break global delegation.
+     * 
+     * Instead, we use a 'e.target' filter to prevent handler
+     * added to document close HuxNav.  
+     *
+     * Also, we use 'click' instead of 'touchstart' as compromise
+     */
+    document.addEventListener('click', function(e){
+        if(e.target == $toggle) return;
+        if(e.target.className == 'icon-bar') return;
+        __HuxNav__.close();
+    })
+</script>
+
+
+    <!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
+<!-- <img src="/img/Git.jpg" width="0" height="0"> -->
+
+<!-- Post Header -->
+<style type="text/css">
+    header.intro-header{
+        position: relative;
+        background-image: url('/img/Git.jpg')
+    }
+
+    
+</style>
+<header class="intro-header" >
+    <div class="header-mask"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <div class="post-heading">
+                    <div class="tags">
+                        
+                        <a class="tag" href="/tags/#Git" title="Git">Git</a>
+                        
+                        <a class="tag" href="/tags/#Github" title="Github">Github</a>
+                        
+                    </div>
+                    <h1>Git学习:提交代码</h1>
+                    
+                    
+                    <h2 class="subheading">Learn-Git-Submit-Code</h2>
+                    
+                    <span class="meta">Posted by Gcelaor on October 12, 2016</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Post Content -->
+<article>
+    <div class="container">
+        <div class="row">
+
+    <!-- Post Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                post-container">
+
+				<p> 本文以实际的案例，总结了Git代码提交相关的操作步骤以及涉及到的Git命令。主要包括：</p>
+
+<p><code class="highlighter-rouge">git add</code>命令将工作区内容添加到暂存区， <code class="highlighter-rouge">git commit</code>命令将暂存区内容提交到本地仓库。 添加<code class="highlighter-rouge">-m</code>参数可直接用指定的message提交本次commit。 否则Vim会打开默认的文本编辑器提示你输入commit message。</p>
+
+<h2 id="section">将改动添加到暂存区</h2>
+
+<p><strong>场景</strong>：在提交前需要选择提交的文件（到暂存区），否则git会提示没有要提交的东西。</p>
+
+<p><strong>步骤</strong>：使用<code class="highlighter-rouge">git add</code>命令即可将某个文件（的修改）添加到暂存区。</p>
+
+<p><strong>文档</strong>：<a href="https://git-scm.com/docs/git-add">https://git-scm.com/docs/git-add</a></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># 添加README.md到暂存区
+git add README.md
+# 添加当前目录所有文件到暂存区
+git add .
+# 强制添加，忽略.gitignore配置
+git add node_modules/ --force
+
+</code></pre>
+</div>
+
+<blockquote>
+  <p><code class="highlighter-rouge">git add</code>会忽略列在<code class="highlighter-rouge">.gitignore</code>中的文件/目录。</p>
+</blockquote>
+
+<h2 id="section-1">提交对仓库中文件的改动</h2>
+
+<p><strong>场景</strong>：希望只提交仓库中既有文件的改动，而不想<code class="highlighter-rouge">add</code>其他的文件（仓库外）。</p>
+
+<p><strong>步骤</strong>：省略<code class="highlighter-rouge">git add</code>命令，然后以<code class="highlighter-rouge">-a</code>参数运行<code class="highlighter-rouge">commit</code>。</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>git commit -a
+
+</code></pre>
+</div>
+
+<blockquote>
+  <p>可通过<code class="highlighter-rouge">git status</code>来查看当前的改动情况，以及本地与远程的同步情况。</p>
+</blockquote>
+
+<h2 id="add">撤销Add</h2>
+
+<p><strong>场景</strong>：不小心添加了文件到暂存区，现在需要撤销所有的<code class="highlighter-rouge">git add</code>。</p>
+
+<p><strong>步骤</strong>：使用<code class="highlighter-rouge">get reset</code>，重置暂存区到HEAD。</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># 取消Add某一个文件
+git reset path/to/file
+# 取消所有Add的文件（将会使得所有改动变成not staged或untracked）
+git reset
+
+</code></pre>
+</div>
+
+<h2 id="commit">撤销上次Commit</h2>
+
+<p><strong>场景</strong>：发现上次<code class="highlighter-rouge">commit</code>信息有误，或不小心<code class="highlighter-rouge">commit</code>了不合适的文件， 希望能撤销<code class="highlighter-rouge">commit</code>而文件不受改动。</p>
+
+<p><strong>步骤</strong>：使用Git的『软』（不改动文件）重置。</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>git reset --soft HEAD^
+
+</code></pre>
+</div>
+
+<blockquote>
+  <p><code class="highlighter-rouge">HEAD^</code>回到表示重置到当前状态的前一个<code class="highlighter-rouge">commit</code>。</p>
+</blockquote>
+
+<h2 id="commit-1">修改上次Commit</h2>
+
+<p><strong>场景</strong>：漏掉了某个文件，或者写错了Commit信息，希望能够补充一下而不是撤销再重新Commit。</p>
+
+<p><strong>步骤</strong>：使用<code class="highlighter-rouge">--amend</code>参数即可修改上次Commit。</p>
+
+<p><strong>文档</strong>：<a href="https://git-scm.com/book/zh/v1/Git-%E5%9F%BA%E7%A1%80-%E6%92%A4%E6%B6%88%E6%93%8D%E4%BD%9C">https://git-scm.com/book/zh/v1/Git-%E5%9F%BA%E7%A1%80-%E6%92%A4%E6%B6%88%E6%93%8D%E4%BD%9C</a></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># 下面三条命令只产生一个Commit
+git commit -m 'initial commit'
+git add forgotten_file  # 添加漏掉的文件
+git commit --amend      # 补充Commit信息
+
+</code></pre>
+</div>
+
+<h2 id="section-2">撤销工作区所有改动</h2>
+
+<p><strong>场景</strong>：希望撤销所有工作区的改动，回到最后一次commit的状态。</p>
+
+<p><strong>步骤</strong>：<code class="highlighter-rouge">git checkout</code>和<code class="highlighter-rouge">git reset</code>都可达到目的。</p>
+
+<p><strong>文档</strong>：<a href="https://git-scm.com/docs/git-reset">https://git-scm.com/docs/git-reset</a>, <a href="https://git-scm.com/docs/git-checkout">https://git-scm.com/docs/git-checkout</a></p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># 重置工作区的所有改动
+git reset --hard
+# 该命令可以指定当前目录，还是某个文件
+git checkout .
+
+</code></pre>
+</div>
+
+<h2 id="section-3">空提交</h2>
+
+<p><strong>场景</strong>：只想产生一个commit而不想改动文件。比如需要push一个commit以触发重新部署的Git Hook时。 <strong>步骤</strong>：使用<code class="highlighter-rouge">--allow-empty</code>参数来提交。</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>git commit --allow-empty -m 'empty commit'
+
+</code></pre>
+</div>
+
+<h2 id="section-4">将文件从仓库中移除</h2>
+
+<p><strong>场景</strong>：不小心把不应提交到仓库的文件（比如临时文件，大文件，配置文件等）提交了进去，现在希望将其删除。</p>
+
+<p><strong>步骤</strong>：使用 <code class="highlighter-rouge">git rm</code> 命令。</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># 从仓库和工作区都删除它（例如临时文件）
+git rm .*.swp
+# 只从仓库中删除，工作区中保留（例如配置文件）
+git rm --cached config.yml
+
+</code></pre>
+</div>
+
+<p>如果希望从仓库历史中也删除（例如大文件），那么需要使用<code class="highlighter-rouge">git filter-branch</code>系列命令。 请参考<a href="http://harttle.com/2016/03/22/purge-large-files-in-gitrepo.html">寻找并删除Git记录中的大文件</a>一文。</p>
+
+<blockquote>
+  <p><code class="highlighter-rouge">git rm</code>和bash <code class="highlighter-rouge">rm</code>的参数类似，基本可通用。</p>
+</blockquote>
+
+
+                <hr style="visibility: hidden;">
+
+                
+                <!-- 多说 Share start -->
+                <div class="ds-share"
+                    style="text-align: right"
+                    data-thread-key="/2016/10/12/Learn-Git-Submit-Code"
+                    data-title="Git学习:提交代码"
+                    data-url="http://localhost:4000/2016/10/12/Learn-Git-Submit-Code/"
+                    data-images="http://localhost:4000/img/Git.jpg"
+                    data-content=" 本文以实际的案例，总结了Git代码提交相关的操作步骤以及涉及到的Git命令。主要包括：
+
+git add命令将工作区内容添加到暂存区， git comm... | Gcelaor Blog " >
+                    <div class="ds-share-inline">
+                      <style> 
+                        .ds-share-icons-16 {display:none;} 
+                      </style>
+                      <ul class="ds-share-icons-16">
+                        <li data-toggle="ds-share-icons-more"><a class="ds-more" href="#">分享到：</a></li>
+                        <li><a class="ds-wechat flat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+                        <li><a class="ds-weibo flat" href="javascript:void(0);" data-service="weibo">微博</a></li>
+                        <li><a class="ds-douban flat" href="javascript:void(0);" data-service="douban">豆瓣</a></li>
+                      </ul>
+                      <div class="ds-share-icons-more">
+                      </div>
+                    </div>
+                <hr>
+                </div>
+                <!-- 多说 Share end-->
+                
+
+
+                <ul class="pager">
+                    
+                    <li class="previous">
+                        <a href="/2016/10/12/Git-Submit-Code/" data-toggle="tooltip" data-placement="top" title="Git:提交代码">
+                        Previous<br>
+                        <span>Git:提交代码</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="next">
+                        <a href="/2016/10/12/Learn-Git-Remote/" data-toggle="tooltip" data-placement="top" title="Git学习—远程仓库">
+                        Next<br>
+                        <span>Git学习—远程仓库</span>
+                        </a>
+                    </li>
+                    
+                </ul>
+
+
+                
+                <!-- 多说评论框 start -->
+                <div class="comment">
+                    <div class="ds-thread"
+                        data-thread-key="/2016/10/12/Learn-Git-Submit-Code"
+                        data-title="Git学习:提交代码"
+                        data-url="http://localhost:4000/2016/10/12/Learn-Git-Submit-Code/" >
+                    </div>
+                </div>
+                <!-- 多说评论框 end -->
+                
+
+                
+
+            </div>  
+
+    <!-- Side Catalog Container -->
+        
+            <div class="
+                col-lg-2 col-lg-offset-0
+                visible-lg-block
+                sidebar-container
+                catalog-container">
+                <div class="side-catalog">
+                    <hr class="hidden-sm hidden-xs">
+                    <h5>
+                        <a class="catalog-toggle" href="#">CATALOG</a>
+                    </h5>
+                    <ul class="catalog-body"></ul>
+                </div>
+            </div>
+        
+
+    <!-- Sidebar Container -->
+            <div class="
+                col-lg-8 col-lg-offset-2
+                col-md-10 col-md-offset-1
+                sidebar-container">
+
+                <!-- Featured Tags -->
+                
+                <section>
+                    <hr class="hidden-sm hidden-xs">
+                    <h5><a href="/tags/">FEATURED TAGS</a></h5>
+                    <div class="tags">
+        				
+                            
+                				<a href="/tags/#Git" title="Git" rel="5">
+                                    Git
+                                </a>
+                            
+        				
+                            
+                				<a href="/tags/#Github" title="Github" rel="4">
+                                    Github
+                                </a>
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+                            
+        				
+        			</div>
+                </section>
+                
+
+                <!-- Friends Blog -->
+                
+                <hr>
+                <h5>FRIENDS</h5>
+                <ul class="list-inline">
+                    
+                        <li><a href="https://github.com/hawx1993">trikgit4</a></li>
+                    
+                </ul>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+
+
+<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+<script type="text/javascript">
+    // dynamic User by gcelaor
+    var _user = 'gcelaor';
+
+    // duoshuo comment query.
+    var duoshuoQuery = {short_name: _user };
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0]
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+</script>
+<!-- 多说公共JS代码 end -->
+
+
+
+
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+<!-- anchor-js, Doc:http://bryanbraun.github.io/anchorjs/ -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/anchor-js/1.1.1/anchor.min.js",function(){
+        anchors.options = {
+          visible: 'always',
+          placement: 'right',
+          icon: '#'
+        };
+        anchors.add().remove('.intro-header h1').remove('.subheading').remove('.sidebar-container h5');
+    })
+</script>
+<style>
+    /* place left on bigger screen */
+    @media all and (min-width: 800px) {
+        .anchorjs-link{
+            position: absolute;
+            left: -0.75em;
+            font-size: 1.1em;
+            margin-top : -0.1em;
+        }
+    }
+</style>
+
+
+    <!-- Footer -->
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                <ul class="list-inline text-center">
+                    
+                    <li>
+                         <a href="/feed.xml">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                          
+
+                    <!-- add Weibo, Zhihu by Hux, add target = "_blank" to <a> by Hux -->
+                    
+                    <li>
+                        <a target="_blank" href="https://www.zhihu.com/people/gcelaor">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa  fa-stack-1x fa-inverse">知</i>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li>
+                        <a target="_blank" href="http://weibo.com/gcelaor">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-weibo fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                    
+
+
+                    
+                    
+                    <li>
+                        <a target="_blank" href="https://github.com/gcelaor">
+                            <span class="fa-stack fa-lg">
+                                <i class="fa fa-circle fa-stack-2x"></i>
+                                <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+                            </span>
+                        </a>
+                    </li>
+                     
+                     <!-- 经过R's测试，不能显示出图标
+                          -->
+                    
+                </ul>
+                <p class="copyright text-muted">
+                    Copyright &copy;  2016
+                     <br> 
+                    Theme by <a href="https://gcelaor.github.io">gcelaor</a> | 
+                       <iframe 
+                        style="margin-left: 2px; margin-bottom:-5px;" 
+                         frameborder="0" scrolling="0" width="91px" height="20px" 
+                        src="https://ghbtns.com/github-btn.html?user=gcelaor&repo=gcelaor.github.io&type=star">  
+                      </iframe>
+                      
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- jQuery -->
+<script src="/js/jquery.min.js "></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="/js/bootstrap.min.js "></script>
+
+<!-- Custom Theme JavaScript -->
+<script src="/js/hux-blog.min.js "></script>
+
+<!-- Service Worker -->
+
+<script type="text/javascript">
+    if(navigator.serviceWorker){
+        // For security reasons, a service worker can only control the pages that are in the same directory level or below it. That's why we put sw.js at ROOT level.
+    	navigator.serviceWorker
+            .register('/sw.js')
+            .then((registration) => {console.log('Service Worker Registered. ', registration)})             
+			.catch((error) => {console.log('ServiceWorker registration failed: ', error)})
+    }
+</script>
+
+
+
+<!-- async load function -->
+<script>
+    function async(u, c) {
+      var d = document, t = 'script',
+          o = d.createElement(t),
+          s = d.getElementsByTagName(t)[0];
+      o.src = u;
+      if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+      s.parentNode.insertBefore(o, s);
+    }
+</script>
+
+<!-- Highlight.js -->
+<script>
+    async("http://cdn.bootcss.com/highlight.js/8.6/highlight.min.js", function(){
+        hljs.initHighlightingOnLoad();
+    })
+    // only load tagcloud.js in tag.html
+    if($('#tag_cloud').length !== 0){
+			async('/js/jquery.tagcloud.js',function(){
+            $.fn.tagcloud.defaults = {
+                //size: {start: 1, end: 1, unit: 'em'},
+                color: {start: '#bbbbee', end: '#0085a1'},
+            };
+            $('#tag_cloud a').tagcloud();
+        })
+    }
+</script>
+<link href="http://cdn.bootcss.com/highlight.js/8.6/styles/github.min.css" rel="stylesheet">
+
+<!--fastClick.js -->
+<script>
+    async("//cdnjs.cloudflare.com/ajax/libs/fastclick/1.0.6/fastclick.min.js", function(){
+        // var $nav = document.querySelector("nav");
+        // if($nav) FastClick.attach($nav);
+
+        // global FastClick!!
+        FastClick.attach(document.body);    
+    })
+</script>
+
+<!-- Google Analytics -->
+
+<script>
+    // dynamic User by Voleking
+    var _gaId = 'UA-49627206-1';
+    var _gaDomain = 'gcelaor.github.io';
+
+    // Originial
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', _gaId, _gaDomain);
+    ga('send', 'pageview');
+</script>
+
+
+
+<!-- Baidu Tongji -->
+
+
+
+<!-- Side Catalog -->
+
+<script type="text/javascript">
+    function generateCatalog (selector) {
+        var P = $('div.post-container'),a,n,t,l,i,c;
+        a = P.find('h1,h2,h3,h4,h5,h6');
+        a.each(function () {
+            n = $(this).prop('tagName').toLowerCase();
+            i = "#"+$(this).prop('id');
+            t = $(this).text();
+            c = $('<a href="'+i+'" rel="nofollow">'+t+'</a>');
+            l = $('<li class="'+n+'_nav"></li>').append(c);
+            $(selector).append(l);
+        });
+        return true;    
+    }
+
+    generateCatalog(".catalog-body");
+
+    // toggle side catalog
+    $(".catalog-toggle").click((function(e){
+        e.preventDefault();
+        $('.side-catalog').toggleClass("fold")
+    }))
+
+    /*
+     * Doc: https://github.com/davist11/jQuery-One-Page-Nav
+     * Fork by Hux to support padding
+     */
+    async("/js/jquery.nav.js", function () {
+        $('.catalog-body').onePageNav({
+            currentClass: "active",
+            changeHash: !1,
+            easing: "swing",
+            filter: "",
+            scrollSpeed: 700,
+            scrollOffset: 0,
+            scrollThreshold: .2,
+            begin: null,
+            end: null,
+            scrollChange: null,
+            padding: 80
+        });
+    });
+</script>
+
+
+
+
+<!-- Image to hack wechat -->
+<!-- <img src="/img/icon_wechat.png" width="0" height="0" /> -->
+<!-- Migrate from head to bottom, no longer block render and still work -->
+
+</body>
+
+</html>
