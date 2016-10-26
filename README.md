@@ -1,8 +1,10 @@
+#Gcelaor Blog
+
+###[View Live Hux Blog &rarr;](https://gcelaor.github.io)
+
+![](https://gcelaor.github.io/img/blog-tags.jpg)
 
 
-Gcelao Blog | View (https://gcelaor.github.io/).
-
-# Jekyll Blog 
 
 
 
