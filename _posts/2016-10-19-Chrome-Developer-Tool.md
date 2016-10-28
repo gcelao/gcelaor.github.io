@@ -1,0 +1,115 @@
+---
+layout:    post
+title:     "Chrome开发者工具"
+subtitle: "Chrome Developer Tool"
+date:       2016-10-19 14:21:35
+author:     "gcelaor"
+header-img: "img/semantic.jpg"
+catalog: true
+tags:
+    - 译文
+    - Chrome开发者工具
+---
+在Web开发者中，Google Chrome是使用最广泛的浏览器。六周一次的发布周期和一套强大的不断扩大开发功能，使其成为了web开发者必备的工具。你可能已经熟悉了它的部分功能，如使用console和debugger在线编辑CSS。在这篇文章中，我们将分享15个有助于改进你的开发流程的技巧。
+
+## 一、快速切换文件
+
+如果你使用过sublime text，那么你可能不习惯没有Go to anything这个功能的覆盖。你会很高兴听到chrome开发者功能也有这个功能，当DevTools被打开的时候，按Ctrl+P（cmd+p on mac）,就能快速搜寻和打开你项目的文件。
+
+[![image](https://camo.githubusercontent.com/83097ccca29010988e821b03ef3a2cd93a3bb672/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f312e676966)](https://camo.githubusercontent.com/83097ccca29010988e821b03ef3a2cd93a3bb672/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f312e676966)
+
+## 二、在源代码中搜索
+
+如果你希望在源代码中搜索要怎么办呢？在页面已经加载的文件中搜寻一个特定的字符串，快捷键是Ctrl + Shift + F (Cmd + Opt + F)，这种搜寻方式还支持正则表达式哦
+
+[![image](https://camo.githubusercontent.com/2f11c9efe247a8e182c123a8e31155d810e7ae16/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f322e536561726368416c6c2e676966)](https://camo.githubusercontent.com/2f11c9efe247a8e182c123a8e31155d810e7ae16/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f322e536561726368416c6c2e676966)
+
+## 三、快速跳转到指定行
+
+在Sources标签中打开一个文件之后，在Windows和Linux中，按Ctrl + G，(or Cmd + L for Mac)，然后输入行号，DevTools就会允许你跳转到文件中的任意一行。
+
+[![image](https://camo.githubusercontent.com/68971fc1ef924f23a9d2a51ec896a88936966de5/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f332e4a756d70546f4c696e652e676966)](https://camo.githubusercontent.com/68971fc1ef924f23a9d2a51ec896a88936966de5/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f332e4a756d70546f4c696e652e676966)
+
+另外一种方式是按Ctrl + O，输入:和行数，而不用去寻找一个文件。
+
+## 四、在控制台选择元素
+
+DevTools控制台支持一些变量和函数来选择DOM元素：
+
+- $()–document.querySelector()的简写，返回第一个和css选择器匹配的元素。例如$(‘div’)返回这个页面中第一个div元素
+- $$()–document.querySelectorAll()的简写，返回一个和css选择器匹配的元素数组。
+- $0-$4–依次返回五个最近你在元素面板选择过的DOM元素的历史记录，$0是最新的记录，以此类推。
+
+[![image](https://camo.githubusercontent.com/405f204784a1a76d9f5e1c040f528668bcc5b41d/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f342e2e676966)](https://camo.githubusercontent.com/405f204784a1a76d9f5e1c040f528668bcc5b41d/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f342e2e676966)
+
+想要了解更多控制台命令，戳这里：[Command Line API](https://developer.chrome.com/devtools/docs/commandline-api)
+
+## 五、使用多个插入符进行选择
+
+当编辑一个文件的时候，你可以按住Ctrl（cmd for mac），在你要编辑的地方点击鼠标，可以设置多个插入符，这样可以一次在多个地方编辑。
+
+[![image](https://camo.githubusercontent.com/f6d1344f7aaedae26d74caf4abf17e0ec971a6ba/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f352e4d756c7469706c6553656c656374436c69636b2e676966)](https://camo.githubusercontent.com/f6d1344f7aaedae26d74caf4abf17e0ec971a6ba/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f352e4d756c7469706c6553656c656374436c69636b2e676966)
+
+## 六、保存记录
+
+勾选在Console标签下的保存记录选项，你可以使DevTools的console继续保存记录而不会在每个页面加载之后清除记录。当你想要研究在页面还没加载完之前出现的bug时，这会是一个很方便的方法。
+
+[![image](https://cloud.githubusercontent.com/assets/7871813/17443211/f43c7b90-5b6b-11e6-9f60-a4a77d6832fa.png)](https://cloud.githubusercontent.com/assets/7871813/17443211/f43c7b90-5b6b-11e6-9f60-a4a77d6832fa.png)
+
+## 七、优质打印
+
+Chrome’s Developer Tools有内建的美化代码，可以返回一段最小化且格式易读的代码。Pretty Print的按钮在Sources标签的左下角。
+
+[![image](https://camo.githubusercontent.com/04e10ac1d0136db6156a931721584b504914fdbf/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f372e5072657474795072696e742e676966)](https://camo.githubusercontent.com/04e10ac1d0136db6156a931721584b504914fdbf/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f372e5072657474795072696e742e676966)
+
+## 八、设备模式
+
+对于开发移动友好页面，DevTools包含了一个非常强大的模式，这个谷歌视频介绍了其主要特点，如调整屏幕大小、触摸仿真和模拟糟糕的网络连接。
+
+[![image](https://cloud.githubusercontent.com/assets/7871813/17443058/2a7fe0ee-5b6b-11e6-8c2c-6ef54c0f5bf3.png)](https://cloud.githubusercontent.com/assets/7871813/17443058/2a7fe0ee-5b6b-11e6-8c2c-6ef54c0f5bf3.png)
+
+## 九、设备传感仿真
+
+设备模式的另一个很酷的功能是模拟移动设备的传感器，例如触摸屏幕和加速计。你甚至可以恶搞你的地理位置。这个功能位于元素标签的底部，点击“show drawer”按钮，就可看见Emulation标签 --> Sensors.
+
+[![image](https://camo.githubusercontent.com/e71011048fb5cc068ac8dbd30537461eff8e83bb/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f392e53656e736f72732e676966)](https://camo.githubusercontent.com/e71011048fb5cc068ac8dbd30537461eff8e83bb/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f392e53656e736f72732e676966)
+
+## 十、颜色选择器
+
+当在样式编辑中选择了一个颜色属性时，你可以点击颜色预览，就会弹出一个颜色选择器。当选择器开启时，如果你停留在页面，鼠标指针会变成一个放大镜，让你去选择像素精度的颜色。
+
+[![image](https://camo.githubusercontent.com/24425ceee9622c479f892f48151623ffa0a3d5b8/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f31302e436f6c6f725069636b65722e676966)](https://camo.githubusercontent.com/24425ceee9622c479f892f48151623ffa0a3d5b8/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f31302e436f6c6f725069636b65722e676966)
+
+## 十一、强制改变元素状态
+
+DevTools有一个可以模拟CSS状态的功能，例如元素的hover和focus,可以很容易的改变元素样式。在CSS编辑器中可以利用这个功能
+
+[![image](https://camo.githubusercontent.com/34498294a1fe9a9f60f353300a697dae3b36e1d0/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f31312e53696d756c617465486f7665722e676966)](https://camo.githubusercontent.com/34498294a1fe9a9f60f353300a697dae3b36e1d0/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f31312e53696d756c617465486f7665722e676966)
+
+## 十二、可视化的DOM阴影
+
+Web浏览器在构建如文本框、按钮和输入框一类元素时，其它基本元素的视图是隐藏的。不过，你可以在Settings -> General 中切换成Show user agent shadow DOM，这样就会在元素标签页中显示被隐藏的代码。甚至还能单独设计他们的样式，这给你了很大的控制权。
+
+[![image](https://camo.githubusercontent.com/c18547dd71fea11a3836598ada2943a3b215a8d6/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f31322e536861646f77444f4d2e676966)](https://camo.githubusercontent.com/c18547dd71fea11a3836598ada2943a3b215a8d6/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f31322e536861646f77444f4d2e676966)
+
+## 十三、选择下一个匹配项
+
+当在Sources标签下编辑文件时，按下Ctrl + D (Cmd + D) ，当前选中的单词的下一个匹配也会被选中，有利于你同时对它们进行编辑。
+
+[![image](https://camo.githubusercontent.com/17358d90b613fd516a14927d9bd909e8338633d3/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f31332e4d756c746953656c6563742e676966)](https://camo.githubusercontent.com/17358d90b613fd516a14927d9bd909e8338633d3/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f31332e4d756c746953656c6563742e676966)
+
+## 十四、改变颜色格式
+
+在颜色预览功能使用快捷键Shift + Click，可以在rgba、hsl和hexadecimal来回切换颜色的格式
+
+[![image](https://camo.githubusercontent.com/fdcb27e7a5cc329e7727703c9f50259c20f68969/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f31342e436f6c6f72466f726d61742e676966)](https://camo.githubusercontent.com/fdcb27e7a5cc329e7727703c9f50259c20f68969/687474703a2f2f63646e2e7475746f7269616c7a696e652e636f6d2f77702d636f6e74656e742f75706c6f6164732f323031352f30332f31342e436f6c6f72466f726d61742e676966)
+
+## 十五、通过workspaces来编辑本地 文件
+
+Workspaces是Chrome DevTools的一个强大功能，这使DevTools变成了一个真正的IDE。Workspaces会将Sources选项卡中的文件和本地项目中的文件进行匹配，所以你可以直接编辑和保存，而不必复制/粘贴外部改变的文件到编辑器。
+
+为了配置Workspaces，只需打开Sources选项，然后右击左边面板的任何一个地方，选择Add Folder To Worskpace，或者只是把你的整个工程文件夹拖放入Developer Tool。现在，无论在哪一个文件夹，被选中的文件夹，包括其子目录和所有文件都可以被编辑。为了让Workspaces更高效，你可以将页面中用到的文件映射到相应的文件夹，允许在线编辑和简单的保存。
+
+了解更多关于Workspaces的使用，戳这里：[Workspaces](https://developer.chrome.com/devtools/docs/workspaces)
+
+## 参考
